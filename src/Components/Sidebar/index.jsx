@@ -38,7 +38,7 @@ import ChangeLog from "../../assets/icons/changeLog.svg?react";
 import Docs from "../../assets/icons/docs.svg?react";
 import Folder from "../../assets/icons/folder.svg?react";
 import StatusPages from "../../assets/icons/status-pages.svg?react";
-import Discussions from "../../assets/icons/discussions.svg?react";
+import ChatBubbleOutlineRoundedIcon from "@mui/icons-material/ChatBubbleOutlineRounded";
 import DistributedUptimeIcon from "../../assets/icons/distributed-uptime.svg?react";
 import "./index.css";
 
@@ -63,36 +63,31 @@ const menu = [
 
 	{ name: "Status pages", path: "status", icon: <StatusPages /> },
 	{ name: "Maintenance", path: "maintenance", icon: <Maintenance /> },
-	// { name: "Integrations", path: "integrations", icon: <Integrations /> },
-	{
-		name: "Account",
-		icon: <Account />,
-		nested: [
-			{ name: "Profile", path: "account/profile", icon: <UserSvg /> },
-			{ name: "Password", path: "account/password", icon: <LockSvg /> },
-			{ name: "Team", path: "account/team", icon: <TeamSvg /> },
-		],
-	},
 	{
 		name: "Settings",
 		icon: <Settings />,
 		path: "settings",
-	},
-	{
-		name: "Other",
-		icon: <Folder />,
-		nested: [
+	}
+];
+
+
+const otherMenuItems = [
+	
 			{ name: "Support", path: "support", icon: <Support /> },
 			{
 				name: "Discussions",
 				path: "discussions",
-				icon: <Discussions />,
+				icon: <ChatBubbleOutlineRoundedIcon />,
 			},
 			{ name: "Docs", path: "docs", icon: <Docs /> },
 			{ name: "Changelog", path: "changelog", icon: <ChangeLog /> },
-		],
-	},
-];
+]
+
+const hamburgerMenuItems = [
+	        { name: "Profile", path: "account/profile", icon: <UserSvg /> },
+			{ name: "Password", path: "account/password", icon: <LockSvg /> },
+			{ name: "Team", path: "account/team", icon: <TeamSvg /> },
+]
 
 /* TODO this could be a key in nested Path would be the link */
 const URL_MAP = {
@@ -588,6 +583,64 @@ function Sidebar() {
 					})}
 				</List>
 			</Box>
+
+
+			<List component="nav" disablePadding sx={{ px: theme.spacing(6) }}>
+	{otherMenuItems.map((item) => {
+		// Try to understand this logic
+		if (
+			item.path === "distributed-uptime" &&
+			distributedUptimeEnabled === false
+		) {
+			return null;
+		}
+		return item.path ? (
+			<Tooltip
+				key={item.path}
+				placement="right"
+				title={collapsed ? item.name : ""}
+				slotProps={{
+					popper: {
+						modifiers: [
+							{
+								name: "offset",
+								options: {
+									offset: [0, -16],
+								},
+							},
+						],
+					},
+				}}
+				disableInteractive
+			>
+				<ListItemButton
+					className={
+						location.pathname.startsWith(`/${item.path}`) ? "selected-path" : ""
+					}
+					onClick={() => {
+						const url = URL_MAP[item.path];
+						if (url) {
+							window.open(url, "_blank", "noreferrer");
+						} else {
+							navigate(`/${item.path}`);
+						}
+					}}
+					sx={{
+						height: "37px",
+						gap: theme.spacing(4),
+						borderRadius: theme.shape.borderRadius,
+						px: theme.spacing(4),
+					}}
+				>
+					<ListItemIcon sx={{ minWidth: 0 }}>{item.icon}</ListItemIcon>
+					<ListItemText>{item.name}</ListItemText>
+				</ListItemButton>
+			</Tooltip>
+		) : null;
+})}
+</List>
+
+
 			<Divider sx={{ mt: "auto", borderColor: theme.palette.primary.lowContrast }} />
 
 			<Stack
@@ -628,19 +681,10 @@ function Sidebar() {
 				) : (
 					<>
 						<Avatar small={true} />
-						<Box
-							ml={theme.spacing(2)}
-							sx={{ maxWidth: "50%", overflow: "hidden" }}
-						>
+						<Box ml={theme.spacing(2)}>
 							<Typography
 								component="span"
 								fontWeight={500}
-								sx={{
-									display: "block",
-									whiteSpace: "nowrap",
-									overflow: "hidden",
-									textOverflow: "ellipsis",
-								}}
 							>
 								{authState.user?.firstName} {authState.user?.lastName}
 							</Typography>
@@ -714,22 +758,43 @@ function Sidebar() {
 						ml: theme.spacing(8),
 					}}
 				>
+
+					{!collapsed && 
+					hamburgerMenuItems.map((item) => {
+						if(
+							item.name==="Team" &&
+							authState.user?.role &&
+							!authState.user.role.includes("superadmin")
+						) {
+							return null;
+						}
+						return (
+							<MenuItem
+							key={item.path}
+							onClick={() => navigate(`/${item.path}`)}
+							sx={{
+								gap: theme.spacing(4),
+								borderRadius: theme.shape.borderRadius,
+								pl: theme.spacing(4),
+								"& svg path": {
+									stroke: iconColor,
+								},
+							}}
+						>
+							{item.icon}
+							{item.name}
+						</MenuItem>
+						)
+					})}					
+
+
 					{collapsed && (
-						<MenuItem sx={{ cursor: "default", minWidth: "50%" }}>
-							<Box
-								mb={theme.spacing(2)}
-								sx={{ maxWidth: "50%", overflow: "hidden" }}
-							>
+						<MenuItem sx={{ cursor: "default", minWidth: "150px" }}>
+							<Box mb={theme.spacing(2)}>
 								<Typography
 									component="span"
 									fontWeight={500}
 									fontSize={13}
-									sx={{
-										display: "block",
-										whiteSpace: "nowrap",
-										overflow: "hidden",
-										textOverflow: "ellipsis",
-									}}
 								>
 									{authState.user?.firstName} {authState.user?.lastName}
 								</Typography>
@@ -741,7 +806,7 @@ function Sidebar() {
 					)}
 					{/* TODO Do we need two dividers? */}
 					{collapsed && <Divider />}
-					<Divider />
+					{/* <Divider /> */}
 					<MenuItem
 						onClick={logout}
 						sx={{
